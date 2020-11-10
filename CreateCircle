@@ -1,0 +1,155 @@
+import matplotlib.pyplot as plt
+from numpy import pi, sin, cos, array, transpose, dot
+from numpy import radians, degrees, set_printoptions
+
+#There is the (x,y)-system and the (X,Y)-system.
+
+#         [s_xx  t_xy ]     [-1  4 ]
+#  S_xy = [           ]  =  [      ]
+#         [t_xy  s_yy ]     [ 4  5 ]
+
+# ---
+# --- User input:
+# ---
+
+# 1: Stress tensor components:
+(s_xx, s_yy, t_xy) = (-1, 5, 4)
+
+# 2: List of angles phi in degrees:
+phi_deg = array( [0., 30., 60., 90., 120., 150.] )
+
+# ---
+# --- Program output:
+# ---
+
+# phi [ t_X, t_Y ]
+
+# 0.0  [-1.   4.  ]
+# 30.0 [ 3.96 4.6 ]
+# 60.0 [ 6.96 0.6 ]
+# ...
+
+# phi [ s_XX, t_XY ]
+#     [ t_XY, s_YY ]
+
+# 0.0   [-1.   4.  ]
+#       [ 4.   5.  ]
+# 30.0  [ 3.96 4.6 ]
+#       [ 4.6  0.04]
+# 60.0  [ 6.96 0.6 ]
+#       [ 0.6 -2.96]
+# ...
+
+# ---
+# --- Program:
+# ---
+
+# Matrix of components::
+S_xy = array([ [s_xx, t_xy],
+               [t_xy, s_yy] ])
+
+# Yes
+half = 0.5
+two  = 2.0
+
+# Some functions for later use:
+def c2(phi):
+    """ computes cos(2 phi) """
+    return cos(two*phi)
+
+def s2(phi):
+    """ computes sin(2 phi) """
+    return sin(two*phi)
+
+def get_t_X(phi):
+    """
+    computes t_X(phi) as in section
+    "(X,Y)-Komponenten"
+    """
+    t_X = half*(s_xx + s_yy) + half*(s_xx - s_yy) * c2(phi) + t_xy*s2(phi)
+    return t_X
+
+def get_t_Y(phi):
+    """
+    computes t_Y(phi) as in section
+    "(X,Y)-Komponenten"
+    """
+    t_Y = -half*(s_xx - s_yy) * s2(phi) + t_xy * c2(phi)
+    return t_Y
+
+def get_t_XY(phi):
+    """
+    computes pair (t_X, t_Y)
+    """
+    t_X = get_t_X(phi)
+    t_Y = get_t_Y(phi)
+    return array([t_X, t_Y])
+
+def get_R(phi):
+    """
+    computes rotation matrix as in section
+    "Tensorkomponenten aus Transformationsbeziehung"
+    """
+    Rt = array([ [ cos(phi), sin(phi)],
+                 [-sin(phi), cos(phi)] ] )
+    return Rt
+
+def get_S_XY(phi):
+    """
+    computes S_XY = R * S_xy * R^T as in section
+    "Tensorkomponenten aus Transformationsbeziehung"
+    """
+    R = get_R(phi)
+    R_T = R.transpose()
+    S_XY = dot( dot(R, S_xy), R_T )
+    return S_XY
+
+# Compute and plot some pairs (t_X, t_Y):
+
+# phi in radians:
+phis = array( [ radians(a) for a in phi_deg ] )
+
+# for prettier printing:
+set_printoptions(precision=2)
+
+print ()
+print ("phi   [ t_X, t_Y ]")
+print ()
+for phi in phis:
+    tX_tY = get_t_XY(phi)
+    print (degrees(phi),"  ", tX_tY)
+
+print ()
+print ("phi   [ s_XX, t_XY ]")
+print ("      [ t_XY, s_YY ]")
+print ()
+for phi in phis:
+    S_XY = get_S_XY(phi)
+    print (degrees(phi), "  ", S_XY[0])
+    print ("       ",         S_XY[1])
+
+# Now plot these pairs (t_X, t_Y):
+
+# phi --> t_X(phi):
+t_X = list(map(get_t_X, phis))
+# phi --> t_Y(phi):
+t_Y = list(map(get_t_Y, phis))
+
+# color = phi in degrees:
+color = degrees(phis)
+
+# make the circle be a circle:
+plt.axis("equal")
+
+# plot some colored points:
+plt.scatter(t_X, t_Y, s=100, c=color)
+
+# add colorbar:
+cbar = plt.colorbar()
+
+# plt.clim(0,180.)
+# add ticks to colorbar:
+cbar.set_ticks(degrees(phis))
+
+# show plot:
+plt.show()
