@@ -1,3 +1,5 @@
+# basic structure is copied from wikipedia: https://de.wikipedia.org/wiki/Mohrscher_Spannungskreis#Programm_zum_Ausprobieren
+
 import matplotlib.pyplot as plt
 from numpy import pi, sin, cos, array, transpose, dot
 from numpy import radians, degrees, set_printoptions
